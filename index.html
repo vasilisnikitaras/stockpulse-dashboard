@@ -84,6 +84,21 @@
   }
 
   fetchInventory()
+
+supabase
+  .channel('inventory_changes')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'inventory' },
+    payload => {
+      console.log('🔄 Change received:', payload)
+      fetchInventory() // ξαναφορτώνει τα δεδομένα
+    }
+  )
+  .subscribe()
+
+
+  
 </script>
 
 </body>
