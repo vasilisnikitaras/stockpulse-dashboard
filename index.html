@@ -152,14 +152,25 @@ document.getElementById('addItemForm').addEventListener('submit', async (e) => {
     alert('Συμπλήρωσε σωστά τα πεδία.')
     return
   }
-
+/*
   const { error } = await supabase.from('inventory').insert([
     {
       name,
       quantity,
-      last_updated_timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19)
+     last_updated_timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) 
     }
-  ])
+  ]) 
+  */
+
+const { error } = await supabase.from('inventory').insert([
+  {
+    name,
+    quantity,
+    last_updated_timestamp: new Date().toLocaleString('sv-SE').replace(' ', 'T')
+  }
+])
+
+  
 
   if (error) {
     console.error('❌ Σφάλμα κατά την προσθήκη:', error)
