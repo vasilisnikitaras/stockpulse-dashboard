@@ -34,6 +34,28 @@
     button {
       padding: 5px 10px;
     }
+    #searchInput {
+      margin-bottom: 20px;
+      padding: 5px;
+      width: 50%;
+    }
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      td {
+        border: none;
+        position: relative;
+        padding-left: 50%;
+      }
+      td::before {
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+      }
+    }
   </style>
 </head>
 <body>
@@ -46,12 +68,15 @@
     <button type="submit">Προσθήκη</button>
   </form>
 
+  <input type="text" id="searchInput" placeholder="🔍 Αναζήτηση προϊόντος" />
+
   <table id="inventoryTable">
     <thead>
       <tr>
         <th>Item</th>
         <th>Quantity</th>
         <th>Last Updated</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -77,14 +102,48 @@
         if (item.quantity < 5) row.classList.add('low-stock')
         row.innerHTML = `
           <td>${item.name}</td>
-          <td>${item.quantity}</td>
+          <td contenteditable="true" data-id="${item.id}" class="editable-qty">${item.quantity}</td>
           <td>${
             item.last_updated
               ? new Date(item.last_updated).toLocaleString()
               : '—'
           }</td>
+          <td><button data-id="${item.id}" class="delete-btn">🗑️</button></td>
         `
         tbody.appendChild(row)
+      })
+
+      // Delete buttons
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id')
+          const { error } = await supabase.from('inventory').delete().eq('id', id)
+          if (error) {
+            alert('❌ Σφάλμα στη διαγραφή')
+            console.error(error)
+          } else {
+            fetchInventory()
+          }
+        })
+      })
+
+      // Inline edit
+      document.querySelectorAll('.editable-qty').forEach(cell => {
+        cell.addEventListener('blur', async () => {
+          const id = cell.getAttribute('data-id')
+          const newQty = parseInt(cell.textContent)
+          if (isNaN(newQty) || newQty < 0) {
+            alert('❌ Μη έγκυρη ποσότητα')
+            return
+          }
+          const { error } = await supabase.from('inventory').update({ quantity: newQty }).eq('id', id)
+          if (error) {
+            alert('❌ Σφάλμα στην ενημέρωση')
+            console.error(error)
+          } else {
+            fetchInventory()
+          }
+        })
       })
     }
 
@@ -166,6 +225,15 @@
         document.getElementById('addItemForm').reset()
         fetchInventory()
       }
+    })
+
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase()
+      const rows = document.querySelectorAll('#inventoryTable tbody tr')
+      rows.forEach(row => {
+        const name = row.querySelector('td').textContent.toLowerCase()
+        row.style.display = name.includes(term) ? '' : 'none'
+      })
     })
   </script>
 </body>
