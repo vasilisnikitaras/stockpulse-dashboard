@@ -29,6 +29,16 @@
 <body>
   <h1>📦 StockPulse Inventory Monitor</h1>
 
+
+<form id="addItemForm" style="margin-bottom: 30px;">
+  <h3>➕ Προσθήκη προϊόντος</h3>
+  <input type="text" id="itemName" placeholder="Όνομα προϊόντος" required />
+  <input type="number" id="itemQuantity" placeholder="Ποσότητα" required />
+  <button type="submit">Προσθήκη</button>
+</form>
+
+  
+
   <table id="inventoryTable">
     <thead>
       <tr>
@@ -131,6 +141,38 @@
       .subscribe()
 
     window.fetchInventory = fetchInventory
+
+
+document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const name = document.getElementById('itemName').value.trim()
+  const quantity = parseInt(document.getElementById('itemQuantity').value)
+
+  if (!name || isNaN(quantity)) {
+    alert('Συμπλήρωσε σωστά τα πεδία.')
+    return
+  }
+
+  const { error } = await supabase.from('inventory').insert([
+    {
+      name,
+      quantity,
+      last_updated_timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19)
+    }
+  ])
+
+  if (error) {
+    console.error('❌ Σφάλμα κατά την προσθήκη:', error)
+    alert('Κάτι πήγε στραβά.')
+  } else {
+    console.log('✅ Προστέθηκε:', name)
+    document.getElementById('addItemForm').reset()
+    fetchInventory()
+  }
+})
+
+
+    
   </script>
 </body>
 </html>
