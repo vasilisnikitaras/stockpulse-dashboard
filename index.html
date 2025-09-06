@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockPulse Inventory</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border: 1px solid #ccc; text-align: left; }
+    th { background: #333; color: #fff; }
+    tr.low-stock { background-color: #ffe6e6; }
+  </style>
+</head>
+<body>
+  <h1>📦 StockPulse Inventory Monitor</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Widget A</td>
+        <td>5</td>
+        <td>2025-09-06</td>
+      </tr>
+      <tr class="low-stock">
+        <td>Gadget B</td>
+        <td>2</td>
+        <td>2025-09-05</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+</html>
