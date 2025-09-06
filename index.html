@@ -24,20 +24,27 @@
       background-color: #ffe5e5;
       color: #b30000;
     }
+    form {
+      margin-bottom: 30px;
+    }
+    input {
+      margin-right: 10px;
+      padding: 5px;
+    }
+    button {
+      padding: 5px 10px;
+    }
   </style>
 </head>
 <body>
   <h1>📦 StockPulse Inventory Monitor</h1>
 
-
-<form id="addItemForm" style="margin-bottom: 30px;">
-  <h3>➕ Προσθήκη προϊόντος</h3>
-  <input type="text" id="itemName" placeholder="Όνομα προϊόντος" required />
-  <input type="number" id="itemQuantity" placeholder="Ποσότητα" required />
-  <button type="submit">Προσθήκη</button>
-</form>
-
-  
+  <form id="addItemForm">
+    <h3>➕ Προσθήκη προϊόντος</h3>
+    <input type="text" id="itemName" placeholder="Όνομα προϊόντος" required />
+    <input type="number" id="itemQuantity" placeholder="Ποσότητα" required />
+    <button type="submit">Προσθήκη</button>
+  </form>
 
   <table id="inventoryTable">
     <thead>
@@ -72,8 +79,8 @@
           <td>${item.name}</td>
           <td>${item.quantity}</td>
           <td>${
-            item.last_updated_timestamp
-              ? new Date(item.last_updated_timestamp.replace(' ', 'T')).toLocaleString()
+            item.last_updated
+              ? new Date(item.last_updated).toLocaleString()
               : '—'
           }</td>
         `
@@ -114,20 +121,13 @@
     }
 
     async function fetchInventory() {
-      console.log("📡 Fetching inventory from Supabase...")
       const { data, error } = await supabase.from('inventory').select('*')
       if (error) {
         console.error('Error fetching inventory:', error)
         return
       }
-      console.log("Inventory:", data)
       renderTable(data)
       renderChart(data)
-      data.forEach(item => {
-        if (item.quantity < 5) {
-          console.warn(`⚠️ Low stock for ${item.name}: only ${item.quantity} left`)
-        }
-      })
     }
 
     fetchInventory()
@@ -135,55 +135,38 @@
     supabase
       .channel('inventory_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => {
-        console.log('🔄 Change received:', payload)
         fetchInventory()
       })
       .subscribe()
 
-    window.fetchInventory = fetchInventory
+    document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const name = document.getElementById('itemName').value.trim()
+      const quantity = parseInt(document.getElementById('itemQuantity').value)
 
+      if (!name || isNaN(quantity) || quantity < 0) {
+        alert('Συμπλήρωσε σωστά τα πεδία.')
+        return
+      }
 
-document.getElementById('addItemForm').addEventListener('submit', async (e) => {
-  e.preventDefault()
-  const name = document.getElementById('itemName').value.trim()
-  const quantity = parseInt(document.getElementById('itemQuantity').value)
+      const timestamp = new Date().toISOString()
 
-  if (!name || isNaN(quantity)) {
-    alert('Συμπλήρωσε σωστά τα πεδία.')
-    return
-  }
-/*
-  const { error } = await supabase.from('inventory').insert([
-    {
-      name,
-      quantity,
-     last_updated_timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19) 
-    }
-  ]) 
-  */
+      const { error } = await supabase.from('inventory').insert([
+        {
+          name,
+          quantity,
+          last_updated: timestamp
+        }
+      ])
 
-const { error } = await supabase.from('inventory').insert([
-  {
-    name,
-    quantity,
-    last_updated_timestamp: new Date().toLocaleString('sv-SE').replace(' ', 'T')
-  }
-])
-
-  
-
-  if (error) {
-    console.error('❌ Σφάλμα κατά την προσθήκη:', error)
-    alert('Κάτι πήγε στραβά.')
-  } else {
-    console.log('✅ Προστέθηκε:', name)
-    document.getElementById('addItemForm').reset()
-    fetchInventory()
-  }
-})
-
-
-    
+      if (error) {
+        console.error('❌ Σφάλμα κατά την προσθήκη:', error)
+        alert('Κάτι πήγε στραβά.')
+      } else {
+        document.getElementById('addItemForm').reset()
+        fetchInventory()
+      }
+    })
   </script>
 </body>
 </html>
