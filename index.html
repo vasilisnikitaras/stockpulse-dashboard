@@ -122,8 +122,7 @@
             alert('❌ Σφάλμα στη διαγραφή')
             console.error(error)
           } else {
-            fetchInventory()
-          }
+fetchInventory()          }
         })
       })
 
@@ -141,8 +140,7 @@
             alert('❌ Σφάλμα στην ενημέρωση')
             console.error(error)
           } else {
-            fetchInventory()
-          }
+fetchInventory()          }
         })
       })
     }
@@ -189,12 +187,11 @@
       renderChart(data)
     }
 
-    fetchInventory()
-
+fetchInventory()
     supabase
       .channel('inventory_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => {
-        fetchInventory()
+fetchInventory()
       })
       .subscribe()
 
@@ -223,7 +220,7 @@
         alert('Κάτι πήγε στραβά.')
       } else {
         document.getElementById('addItemForm').reset()
-        fetchInventory()
+      fetchInventory()
       }
     })
 
