@@ -68,34 +68,35 @@
     }
 
     function renderChart(data) {
-      const labels = data.map(item => item.name)
-      const quantities = data.map(item => item.quantity)
+  const labels = data.map(item => item.name)
+  const quantities = data.map(item => item.quantity)
 
-      if (stockChart) {
-        stockChart.data.labels = labels
-        stockChart.data.datasets[0].data = quantities
-        stockChart.update()
-      } else {
-        stockChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Quantity',
-              data: quantities,
-              backgroundColor: ['#4caf50', '#f44336', '#2196f3', '#ff9800'],
-              borderColor: ['#388e3c', '#d32f2f', '#1976d2', '#f57c00'],
-              borderWidth: 1
-            }]
-          },
-          options: {
-            scales: {
-              y: { beginAtZero: true }
-            }
-          }
-        })
+  if (stockChart) {
+    stockChart.data.labels = labels
+    stockChart.data.datasets[0].data = quantities
+    stockChart.update()
+  } else {
+    stockChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Quantity',
+          data: quantities,
+          backgroundColor: labels.map((_, i) => ['#4caf50', '#f44336', '#2196f3', '#ff9800'][i % 4]),
+          borderColor: labels.map((_, i) => ['#388e3c', '#d32f2f', '#1976d2', '#f57c00'][i % 4]),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true }
+        }
       }
-    }
+    })
+  }
+}
+
 
     async function fetchInventory() {
       const { data, error } = await supabase.from('inventory').select('*')
