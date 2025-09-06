@@ -3,19 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StockPulse Inventory</title>
+  <title>StockPulse Inventory Monitor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-    h1 { color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 12px; border: 1px solid #ccc; text-align: left; }
-    th { background: #333; color: #fff; }
-    tr.low-stock { background-color: #ffe6e6; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    tr.low-stock {
+      background-color: #ffe5e5;
+      color: #b30000;
+    }
   </style>
 </head>
 <body>
   <h1>📦 StockPulse Inventory Monitor</h1>
-  <table>
+
+  <table id="inventoryTable">
     <thead>
       <tr>
         <th>Item</th>
@@ -23,83 +37,92 @@
         <th>Last Updated</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>Widget A</td>
-        <td>5</td>
-        <td>2025-09-06</td>
-      </tr>
-      <tr class="low-stock">
-        <td>Gadget B</td>
-        <td>2</td>
-        <td>2025-09-05</td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 
-<script>
-<canvas id="stockChart" width="400" height="200"></canvas>
+  <canvas id="stockChart" width="400" height="200"></canvas>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  const ctx = document.getElementById('stockChart').getContext('2d');
-  const stockChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Gadget A', 'Gadget B'],
-      datasets: [{
-        label: 'Quantity',
-        data: [1, 2], // βάλε τις πραγματικές ποσότητες εδώ
-        backgroundColor: ['#4caf50', '#f44336'],
-        borderColor: ['#388e3c', '#d32f2f'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true }
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://dglbuomuxwcclthoxnrl.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnbGJ1b211eHdjY2x0aG94bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzAwNzMsImV4cCI6MjA3Mjc0NjA3M30.VJ0cseFuIEHsknGyf27Em_eKTrdPdXHQcObaOPRgnkA'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    const ctx = document.getElementById('stockChart').getContext('2d')
+    let stockChart
+
+    function renderTable(data) {
+      const tbody = document.querySelector('#inventoryTable tbody')
+      tbody.innerHTML = ''
+      data.forEach(item => {
+        const row = document.createElement('tr')
+        if (item.quantity < 5) row.classList.add('low-stock')
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.quantity}</td>
+          <td>${new Date(item.last_updated).toLocaleDateString()}</td>
+        `
+        tbody.appendChild(row)
+      })
+    }
+
+    function renderChart(data) {
+      const labels = data.map(item => item.name)
+      const quantities = data.map(item => item.quantity)
+
+      if (stockChart) {
+        stockChart.data.labels = labels
+        stockChart.data.datasets[0].data = quantities
+        stockChart.update()
+      } else {
+        stockChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Quantity',
+              data: quantities,
+              backgroundColor: ['#4caf50', '#f44336', '#2196f3', '#ff9800'],
+              borderColor: ['#388e3c', '#d32f2f', '#1976d2', '#f57c00'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              y: { beginAtZero: true }
+            }
+          }
+        })
       }
     }
-  });
-</script>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    async function fetchInventory() {
+      const { data, error } = await supabase.from('inventory').select('*')
+      if (error) {
+        console.error('Error fetching inventory:', error)
+        return
+      }
 
-  const supabaseUrl = 'https://dglbuomuxwcclthoxnrl.supabase.co'
-  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRnbGJ1b211eHdjY2x0aG94bnJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNzAwNzMsImV4cCI6MjA3Mjc0NjA3M30.VJ0cseFuIEHsknGyf27Em_eKTrdPdXHQcObaOPRgnkA'
-  const supabase = createClient(supabaseUrl, supabaseKey)
+      renderTable(data)
+      renderChart(data)
 
-  async function fetchInventory() {
-    const { data, error } = await supabase
-      .from('inventory')
-      .select('*')
-
-    if (error) {
-      console.error('Error fetching inventory:', error)
-    } else {
-      console.log('Inventory:', data)
-      // You can now display this data on your site
+      data.forEach(item => {
+        if (item.quantity < 5) {
+          console.warn(`⚠️ Low stock for ${item.name}: only ${item.quantity} left`)
+        }
+      })
     }
-  }
 
-  fetchInventory()
+    fetchInventory()
 
-supabase
-  .channel('inventory_changes')
-  .on(
-    'postgres_changes',
-    { event: '*', schema: 'public', table: 'inventory' },
-    payload => {
-      console.log('🔄 Change received:', payload)
-      fetchInventory() // ξαναφορτώνει τα δεδομένα
-    }
-  )
-  .subscribe()
-
-
-  
-</script>
-
+    supabase
+      .channel('inventory_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, payload => {
+        console.log('🔄 Change received:', payload)
+        fetchInventory()
+      })
+      .subscribe()
+  </script>
 </body>
 </html>
