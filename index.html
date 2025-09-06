@@ -62,7 +62,12 @@
           <td>${item.name}</td>
           <td>${item.quantity}</td>
           
-<td>${new Date(item.last_updated_timestamp).toLocaleDateString()}</td>
+          
+<td>${
+  item.last_updated_timestamp
+    ? new Date(item.last_updated_timestamp).toLocaleString()
+    : '—'
+}</td>
 
         `
         tbody.appendChild(row)
